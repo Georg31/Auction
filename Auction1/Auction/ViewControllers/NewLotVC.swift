@@ -20,8 +20,6 @@ class NewLotVC: UIViewController {
     
     @IBOutlet var collectionView: UICollectionView!
     @IBOutlet var lotNameTextField: UITextField!
-    @IBOutlet var startPriceTextField: UITextField!
-    @IBOutlet var bidTextField: UITextField!
     @IBOutlet var descriptionTextView: UITextView!
     let locationManager = CLLocationManager()
     var del: reloadCollection?
@@ -39,11 +37,6 @@ class NewLotVC: UIViewController {
     }
     
     
-    
-    @IBAction func test(_ sender: Any) {
-        
-        
-    }
     
     
     

@@ -398,8 +398,8 @@
                                         </constraints>
                                         <color key="progressTintColor" systemColor="systemOrangeColor" red="1" green="0.58431372550000005" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     </progressView>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="UeZ-0P-7ms">
-                                        <rect key="frame" x="362" y="320" width="42" height="21"/>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Location" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="UeZ-0P-7ms">
+                                        <rect key="frame" x="338.5" y="320" width="65.5" height="21"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="21" id="A6D-RS-OaC"/>
                                         </constraints>
@@ -585,14 +585,6 @@
                                             </userDefinedRuntimeAttribute>
                                         </userDefinedRuntimeAttributes>
                                     </textView>
-                                    <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="saY-0t-dAd">
-                                        <rect key="frame" x="226" y="265" width="46" height="30"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <state key="normal" title="Button"/>
-                                        <connections>
-                                            <action selector="test:" destination="usk-zW-dOQ" eventType="touchUpInside" id="FWW-x4-jKE"/>
-                                        </connections>
-                                    </button>
                                 </subviews>
                                 <constraints>
                                     <constraint firstItem="vf4-7c-uVx" firstAttribute="leading" secondItem="RPU-qx-AmD" secondAttribute="leading" constant="30" id="GW8-6J-2aQ"/>
