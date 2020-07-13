@@ -9,13 +9,14 @@
 import UIKit
 import Firebase
 import AuthenticationServices
-protocol test {
-    func updateBid(price: Int, id: String)
+
+protocol LiveBid: AnyObject{
+    func updateBid(price: Int, id: String, winner: DocumentReference)
 }
 
 class DBService{
     
-    var del: test?
+    weak var del: LiveBid?
     var db: Firestore!
     static var service = DBService()
     
@@ -42,6 +43,26 @@ class DBService{
                 sceneDelegate.signIn()
             }
             else{ print(Error?.localizedDescription as Any)}
+        }
+    }
+    
+
+    
+    func getUser(completion:@escaping((User?) -> () )){
+        let userRef = db.collection("users").document(Auth.auth().currentUser!.uid)
+        userRef.getDocument { (doc, err) in
+            let result = Result {
+                try doc?.data(as: User.self)
+            }
+            switch result {
+            case .success(let user):
+                if let user = user{
+                    completion(user)
+                }
+                else{print("erro")}
+            case.failure(let error):
+                print(error)
+            }
         }
     }
     
@@ -95,34 +116,18 @@ class DBService{
         }
     }
     
-    func getUserLots() {
-        // [START get_document]
-        let docRef = db.collection("users").document(Auth.auth().currentUser!.uid)
-        
-        docRef.getDocument { (document, error) in
-            if let document = document, document.exists {
-                let dataDescription = document.data()
-                let s = dataDescription!["sellingLots"]
-                print(s!)
-            } else {
-                print("Document does not exist")
-            }
-        }
-        // [END get_document]
-    }
     
     
     func updateLot(lot: DocumentReference, bid: Int) {
         let user = db.collection("users").document(Auth.auth().currentUser!.uid)
         lot.updateData([
+            "sold": true,
             "currentPrice": bid,
             "winnerUser": user
         ]) { err in
             if let err = err {
                 print("Error updating document: \(err)")
-            } else {
-                print("Document successfully updated")
-            }
+            } else {}
         }
     }
     
@@ -150,8 +155,32 @@ class DBService{
         }
     }
     
+    func getMyWonLots(completion:@escaping((Lots?) -> () )) {
+        let user = db.collection("users").document(Auth.auth().currentUser!.uid)
+        let s = db.collection("lots").whereField("winnerUser", isEqualTo: user)
+        s.getDocuments() { (querySnapshot, err) in
+            if let err = err {
+                print("Error getting documents: \(err)")
+            } else {
+                for document in querySnapshot!.documents {
+                    let result = Result {
+                        try document.data(as: Lots.self)
+                    }
+                    switch result {
+                    case .success(let lot):
+                        let lot = lot
+                        completion(lot)
+                        
+                    case .failure(let error):
+                        print("Error decoding: \(error)")
+                    }
+                }
+            }
+        }
+    }
     
-    func getMyLots(completion:@escaping((Lots?) -> () )) {
+    
+    func getMySellingLots(completion:@escaping((Lots?) -> () )) {
         let s = db.collection("lots").whereField("sellerUser", isEqualTo: String(Auth.auth().currentUser!.uid))
         s.getDocuments() { (querySnapshot, err) in
             if let err = err {
@@ -196,71 +225,26 @@ class DBService{
         }
     }
     
-     func listenDocument(lotID: String) {
-           // [START listen_document]
-           db.collection("lots").document(lotID)
-               .addSnapshotListener { documentSnapshot, error in
-                 guard let document = documentSnapshot else {
-                   print("Error fetching document: \(error!)")
-                   return
-                 }
+    
+    func listenDocument(lotID: String) {
+        // [START listen_document]
+        db.collection("lots").document(lotID)
+            .addSnapshotListener { documentSnapshot, error in
+                guard let document = documentSnapshot else {
+                    print("Error fetching document: \(error!)")
+                    return
+                }
                 if let data = document.data() {
                     
-                    self.del?.updateBid(price: data["currentPrice"] as! Int, id: document.documentID)
+                    self.del?.updateBid(price: data["currentPrice"] as! Int, id: document.documentID, winner: data["winnerUser"] as? DocumentReference ?? self.db.collection("users").document(Auth.auth().currentUser!.uid) )
                 }
                 else {
-                   print("Document data was empty.")
-                   return
-                 }
-                 
-               }
-           // [END listen_document]
-       }
-    
-    func listenDiffs() {
-        // [START listen_diffs]
-        db.collection("lots").whereField("sold", isEqualTo: false)
-            .addSnapshotListener { querySnapshot, error in
-                guard let snapshot = querySnapshot else {
-                    print("Error fetching snapshots: \(error!)")
+                    print("Document data was empty.")
                     return
                 }
-                snapshot.documentChanges.forEach { diff in
-                    if (diff.type == .added) {
-                        // print("New city: \(diff.document.data())")
-                    }
-                    if (diff.type == .modified) {
-                        let result = Result {
-                            try diff.document.data(as: Lots.self)
-                        }
-                        switch result {
-                        case .success(let price):
-                            _ = price
-                            //self.del?.updateBid(price: price!.currentPrice)
-                            
-                        case .failure(let error):
-                            print("Error decoding city: \(error)")
-                        }
-                        
-                    }
-                    if (diff.type == .removed) {
-                        // print("Removed city: \(diff.document.data())")
-                    }
-                }
+                
         }
-        // [END listen_diffs]
-    }
-    
-    func listenMultiple() {
-        db.collection("lots").whereField("sold", isEqualTo: false)
-            .addSnapshotListener { querySnapshot, error in
-                guard let documents = querySnapshot?.documents else {
-                    print("Error fetching documents: \(error!)")
-                    return
-                }
-                let lots = documents.map { $0["name"]! }
-                print("Current cities in CA: \(lots)")
-        }
+        // [END listen_document]
     }
     
     
@@ -286,6 +270,7 @@ class DBService{
             }
         }
     }
+    
     
 }
 

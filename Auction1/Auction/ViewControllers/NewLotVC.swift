@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CoreLocation
 import Firebase
 import AuthenticationServices
 import ImagePicker
@@ -22,7 +23,7 @@ class NewLotVC: UIViewController {
     @IBOutlet var startPriceTextField: UITextField!
     @IBOutlet var bidTextField: UITextField!
     @IBOutlet var descriptionTextView: UITextView!
-    
+    let locationManager = CLLocationManager()
     var del: reloadCollection?
     var service = DBService.service
     var imgURLS = [String]()
@@ -30,17 +31,20 @@ class NewLotVC: UIViewController {
     var imgs = [UIImage]()
     let imagePicker = ImagePickerController()
     
+    var st = String()
     override func viewDidLoad() {
         super.viewDidLoad()
         setUp()
-        
+        checkLocationServiceEnabled()
     }
     
     
     
     @IBAction func test(_ sender: Any) {
-      
+        
+        
     }
+    
     
     
     @objc func SelectImages(_ sender: UITapGestureRecognizer){
@@ -57,7 +61,9 @@ class NewLotVC: UIViewController {
     
     
     func createLotObject() -> Lots{
-        let lot = Lots(name: lotNameTextField.text!, desc: descriptionTextView.text!, imgs: imgURLS, seller: userID)
+        let s = locationManager.location!.coordinate
+        let lot = Lots(name: lotNameTextField.text!, desc: descriptionTextView.text!, imgs: imgURLS, seller: userID, location: GeoPoint(latitude: s.latitude, longitude: s.longitude))
+        
         return lot
     }
     
@@ -71,6 +77,35 @@ class NewLotVC: UIViewController {
     }
     
     
+    private func checkLocationServiceEnabled() {
+           if CLLocationManager.locationServicesEnabled() {
+               setupLocationManager()
+               checkAuthorizationStatus()
+           }
+       }
+       
+       private func setupLocationManager() {
+           locationManager.delegate = self
+           locationManager.desiredAccuracy = kCLLocationAccuracyBest
+       }
+       
+       private func checkAuthorizationStatus() {
+           switch CLLocationManager.authorizationStatus() {
+           case .authorizedWhenInUse:
+               locationManager.startUpdatingLocation()
+               //mapView.showsUserLocation = true
+           case .authorizedAlways:
+               break
+           case .denied:
+               break
+           case .notDetermined:
+               locationManager.requestWhenInUseAuthorization()
+           case .restricted:
+               break
+           @unknown default:
+            fatalError()
+        }
+       }
 }
 
 
@@ -78,7 +113,7 @@ class NewLotVC: UIViewController {
 
 
 
-extension NewLotVC: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, ImagePickerDelegate{
+extension NewLotVC: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, CLLocationManagerDelegate, ImagePickerDelegate{
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if imgs.count == 0 {return 1}

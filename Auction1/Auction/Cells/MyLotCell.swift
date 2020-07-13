@@ -10,15 +10,9 @@ import UIKit
 
 class MyLotCell: UICollectionViewCell {
     
+    @IBOutlet var statusLabel: UILabel!
     @IBOutlet var imgView: UIImageView!
-    @IBOutlet var statusView: UIView!{
-        didSet{
-            UIView.animate(withDuration: 0.7, delay: 1.0, options: [.repeat, .autoreverse], animations: {
-                self.statusView.backgroundColor = UIColor.green.withAlphaComponent(0.3)
-                self.statusView.layoutIfNeeded()
-            },completion: nil)
-        }
-    }
+    @IBOutlet var statusView: UIView!
     @IBOutlet var currentPriceLabel: UILabel!
     
     

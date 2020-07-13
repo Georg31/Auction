@@ -11,25 +11,24 @@ import UIKit
 class MyLotsVC: UIViewController {
     
     @IBOutlet var collectionView: UICollectionView!
+    
     let refreshControl = UIRefreshControl()
     var service = DBService.service
     var lots = [Lots]()
+   
     override func viewDidLoad() {
         super.viewDidLoad()
         setUpVC()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(true)
-        
-    }
     
     @objc func refreshData() {
         //service.listenMultiple()
         lots.removeAll()
-        service.getMyLots { (lot) in
+        service.getMySellingLots { (lot) in
             DispatchQueue.main.async {
                 self.lots.append(lot!)
+                self.lots = self.lots.sorted(by:{$0.startDate > $1.startDate})
                 self.collectionView.reloadData()
             }
         }
@@ -50,13 +49,7 @@ class MyLotsVC: UIViewController {
         collectionView.refreshControl = refreshControl
         collectionView.delegate = self
         collectionView.dataSource = self
-        lots.removeAll()
-        service.getMyLots { (lot) in
-            DispatchQueue.main.async {
-                self.lots.append(lot!)
-                self.collectionView.reloadData()
-            }
-        }
+        refreshData()
     }
     
 }
@@ -64,13 +57,7 @@ class MyLotsVC: UIViewController {
 
 extension MyLotsVC: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, reloadCollection{
     func reload() {
-        lots.removeAll()
-        service.getMyLots { (lot) in
-            DispatchQueue.main.async {
-                self.lots.append(lot!)
-                self.collectionView.reloadData()
-            }
-        }
+        refreshData()
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -78,14 +65,8 @@ extension MyLotsVC: UICollectionViewDelegate, UICollectionViewDataSource, UIColl
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MyLotCell", for: indexPath) as! MyLotCell
-        lots[indexPath.row].images.first?.downloadImage(completion: { (img) in
-            DispatchQueue.main.async {
-                cell.imgView.image = img
-            }
-        })
-        cell.currentPriceLabel.text = "Current Price: \(lots[indexPath.row].currentPrice)"
-        cell.statusView.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "HomeAuctionCell", for: indexPath) as! HomeAuctionCell
+        cell.setData(lot: lots[indexPath.row])
         return cell
     }
     
@@ -93,6 +74,13 @@ extension MyLotsVC: UICollectionViewDelegate, UICollectionViewDataSource, UIColl
         let width = self.view.frame.width
         return CGSize(width: width - 10 - 10, height: 200)
     }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+           let vc = UIStoryboard(name: "Storyboard", bundle: nil).instantiateViewController(withIdentifier: "BidVC") as! BidVC
+           vc.lotID = self.lots[indexPath.row].id
+           vc.hidden = true
+           self.present(vc, animated: true)
+       }
     
 }
 

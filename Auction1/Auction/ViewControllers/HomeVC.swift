@@ -14,15 +14,20 @@ class HomeVC: UIViewController {
     @IBOutlet var searchBar: UISearchBar!
     @IBOutlet var collectionView: UICollectionView!
     
-    var formatter = DateFormatter()
     var service = DBService.service
     var lots = [Lots]()
+    var searched = [Lots]()
     let refreshControl = UIRefreshControl()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setUp()
         
+        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(true)
+        setUp()
     }
     
     @objc func refreshData() {
@@ -42,7 +47,6 @@ class HomeVC: UIViewController {
     
     
     func setUp(){
-        service.listenDiffs()
         refreshControl.addTarget(self, action: #selector(refreshData), for: UIControl.Event.valueChanged)
         refreshControl.tintColor = UIColor.white
         refreshControl.attributedTitle = NSAttributedString(string: "Refresh Auctions", attributes: .some([NSAttributedString.Key.foregroundColor : UIColor.systemOrange]))
@@ -50,16 +54,7 @@ class HomeVC: UIViewController {
         searchBar.delegate = self
         collectionView.delegate = self
         collectionView.dataSource = self
-        formatter.dateFormat = "HH:mm"
-        service.getAllLots(completion: { (lot) in
-            DispatchQueue.main.async {
-                if lot?.sellerUser != Auth.auth().currentUser?.uid{
-                    self.lots.append(lot!)
-                    self.lots = self.lots.sorted(by:{$0.startDate > $1.startDate})
-                    self.collectionView.reloadData()
-                }
-            }
-        })
+        refreshData()
         
     }
     
@@ -73,20 +68,7 @@ extension HomeVC: UICollectionViewDelegate, UICollectionViewDataSource, UICollec
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "HomeAuctionCell", for: indexPath) as! HomeAuctionCell
-        lots[indexPath.row].images.first?.downloadImage(completion: { (img) in
-            DispatchQueue.main.async {
-                cell.imgView.image = img
-            }
-        })
-        cell.nameLabel.text = lots[indexPath.row].name
-        if lots[indexPath.row].endDate < Date() && lots[indexPath.row].sold{
-            cell.startTimeLabel.text = "Sold"
-        }
-        else if lots[indexPath.row].endDate < Date(){
-            cell.startTimeLabel.text = "Finished"
-        }
-        else
-        {cell.startTimeLabel.text = formatter.string(from: lots[indexPath.row].startDate)}
+        cell.setData(lot: lots[indexPath.row])
         return cell
     }
     
@@ -103,7 +85,17 @@ extension HomeVC: UICollectionViewDelegate, UICollectionViewDataSource, UICollec
     }
     
     
-    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
-        print(lots)
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String){
+        if searchBar.text!.count < 3 {return}
+        searched.removeAll()
+        for lot in lots{
+            if lot.name.contains(searchText.lowercased()){
+                searched.append(lot)
+                DispatchQueue.main.async {
+                    self.lots = self.searched
+                    self.collectionView.reloadData()
+                }
+            }
+        }
     }
 }
